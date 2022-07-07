@@ -1,6 +1,7 @@
 library(shiny)
 library(shinydashboard)
 library(tidyverse)
+source('data.R')
 
 
 ui = dashboardPage(
@@ -9,14 +10,13 @@ ui = dashboardPage(
     
     # Dashboard Sidebar
     dashboardSidebar(
-        sidebarMenu(
-            menuItem('Dashboard', tabName = 'dashboard', icon = icon('dashboard')),
+        sidebarMenu(id = 'sidebar_choice',
             menuItem('Question 1', tabName = 'Q1',
-                     menuSubItem('Question 1a', tabName = 'Q1a'),
-                     menuSubItem('Question 1b', tabName = 'Q1b')),
+                     menuSubItem('Question 1.1', tabName = 'Q1_1'),
+                     menuSubItem('Question 1.2', tabName = 'Q1_2')),
             menuItem('Question 2', tabName = 'Q2',
-                     menuSubItem('Question 2a', tabName = 'Q2a'),
-                     menuSubItem('Question 2b', tabName = 'Q2b'))
+                     menuSubItem('Question 2.1', tabName = 'Q2_1'),
+                     menuSubItem('Question 2.2', tabName = 'Q2_2'))
         )
     ),
     
@@ -24,64 +24,57 @@ ui = dashboardPage(
     dashboardBody(
         
         fluidRow(
-            box(
-                title = 'Please choose the filter',
+            box(title = 'Please choose the condition',
                 
                 checkboxGroupInput(
                     inputId = 'filter',
                     label = 'Filter',
                     choices = c('Professor' = 'Prof',
                                 'Associate Professor' = 'AsoProf',
-                                'Asistant Professor' = 'AsiProf')
+                                'Asistant Professor' = 'AsiProf',
+                                'Instructor' = 'Inst'),
+                    selected = c('Prof', 'AsoProf', 'AsiProf', 'Inst')
                 ),
                 
                 selectInput(
                     inputId = 'variable',
                     label = 'Variable',
-                    choices = c('Gender' = 'gender',
-                                'Ethnicity' = 'ethnicity')
+                    choices = c('Overall' = 'overall',
+                                'Gender' = 'gender',
+                                'Race' = 'race',
+                                'Path' = 'path',
+                                'Rank' = 'rank')
                 ),
-                
-                textInput(inputId = 'testtext', label = 'Input text here'),
-                textOutput('textout'),
                 
                 actionButton(inputId = 'update', label = 'Update')
             )
         ),
         
         tabItems(
-            tabItem(
-                tabName = 'dashboard',
-                h1('Welcome!'),
-                'This is dashboard'
+            tabItem(tabName = 'Q1_1',
+                    'This is tab 1.1',
+                    textOutput('textout')
             ),
             
-            tabItem(
-                tabName = 'Q1a',
-                box(plotOutput('histogram'))
+            tabItem(tabName = 'Q1_2',
+                    'This is tab 1.2'
             ),
             
-            tabItem(tabName = 'Q1b', 'This is tab1b',textOutput('textout1'),),
+            tabItem(tabName = 'Q2_1',
+                    'This is tab 2.1'
+            ),
             
-            tabItem(tabName = 'Q2a', 'This is tab2a',textOutput('textout2'),),
-            
-            tabItem(tabName = 'Q2b', 'This is tab2b',textOutput('textout3'),)
+            tabItem(tabName = 'Q2_2',
+                    'This is tab 2.2'
+            )
         )
     )
 )
 
 server = function(input, output){
-    output$histogram = renderPlot({
-            ggplot(aes(x), data = data.frame(x = rnorm(100))) +
-                geom_histogram()
-        })
     
-    ttt = eventReactive(input$update, {input$testtext})
-    
-    output$textout = renderText(ttt)
-    output$textout1 = renderText(paste('1. Here is the text: ', ttt))
-    output$textout2 = renderText(paste('2. Here is the text: ', ttt))
-    output$textout3 = renderText(paste('3. Here is the text: ', ttt))
+    sidebar_choice = reactive({input$sidebar_choice})
+    output$textout = renderText(sidebar_choice())
 }
 
 shinyApp(ui = ui, server = server)
