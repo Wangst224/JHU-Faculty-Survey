@@ -1,8 +1,13 @@
 library(shiny)
 library(shinydashboard)
 library(tidyverse)
-source('data.R')
 
+Ranks = c('Research Associate' = 'ResAso',
+          'Clinical Instructor' = 'ClinIns',
+          'Instructor' = 'Inst',
+          'Asistant Professor' = 'AsiProf',
+          'Associate Professor' = 'AsoProf',
+          'Professor' = 'Prof')
 
 ui = dashboardPage(
     # Dashboard Header
@@ -27,13 +32,10 @@ ui = dashboardPage(
             box(title = 'Please choose the condition',
                 
                 checkboxGroupInput(
-                    inputId = 'filter',
-                    label = 'Filter',
-                    choices = c('Professor' = 'Prof',
-                                'Associate Professor' = 'AsoProf',
-                                'Asistant Professor' = 'AsiProf',
-                                'Instructor' = 'Inst'),
-                    selected = c('Prof', 'AsoProf', 'AsiProf', 'Inst')
+                    inputId = 'rankfilter',
+                    label = 'Filter by Rank',
+                    choices = Ranks,
+                    selected = Ranks
                 ),
                 
                 selectInput(
@@ -46,35 +48,42 @@ ui = dashboardPage(
                                 'Rank' = 'rank')
                 ),
                 
-                actionButton(inputId = 'update', label = 'Update')
+                actionButton(inputId = 'reset', label = 'Reset')
             )
         ),
         
-        tabItems(
-            tabItem(tabName = 'Q1_1',
-                    'This is tab 1.1',
-                    textOutput('textout')
-            ),
-            
-            tabItem(tabName = 'Q1_2',
-                    'This is tab 1.2'
-            ),
-            
-            tabItem(tabName = 'Q2_1',
-                    'This is tab 2.1'
-            ),
-            
-            tabItem(tabName = 'Q2_2',
-                    'This is tab 2.2'
-            )
-        )
+        h3(textOutput('title')),
+        
+        verbatimTextOutput('tab')
     )
 )
 
 server = function(input, output){
     
-    sidebar_choice = reactive({input$sidebar_choice})
-    output$textout = renderText(sidebar_choice())
+    question.code = reactive({input$sidebar_choice})
+    question.index = reactive({match(question.code(), question.codes)})
+    question.text = reactive({question.texts[question.index()]})
+    
+    data = reactive({
+        sourcedata[,c(question.index(), 5,6)] %>% filter(rank %in% match(input$rankfilter, Ranks))
+    })
+    
+    output$title = renderText({paste(question.code(), ': ', question.text())})
+    
+    variable = reactive({input$variable})
+    observe({print(variable())})
+    
+    result.table = reactive({
+        if (variable() == 'overall'){
+            table(data()[,question.code()])
+        }
+        else{
+            table(data()[,c(question.code(),variable())])
+        }
+        
+    })
+    
+    output$tab = renderPrint({result.table()})
 }
 
 shinyApp(ui = ui, server = server)
