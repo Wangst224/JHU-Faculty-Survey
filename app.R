@@ -1,6 +1,7 @@
 library(shiny)
 library(shinydashboard)
 library(tidyverse)
+source('data.R')
 
 Ranks = c('Research Associate' = 'ResAso',
           'Clinical Instructor' = 'ClinIns',
