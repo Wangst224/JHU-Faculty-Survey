@@ -1,19 +1,68 @@
 library(tidyverse)
 library(stringr)
 
-sourcedata_path = 'D:/Default_Working_Directory/Data/JHU_Survey/FSS Final Dataset 5-19-2022 Raw Data - Includes Demographics and Pre-loaded Data.xlsx'
-sourcedata = readxl::read_excel(sourcedata_path)[,-1]
+data_path = 'Faculty Satisfaction Survey Source Data.xlsx'
 
-# Temporary
-sourcedata = sourcedata[,c(1:4, 34, 107)]
+code_text = readxl::read_excel(data_path, sheet = 'Code&Text')
+data.2015 = readxl::read_excel(data_path, sheet = '2015')
+data.2018 = readxl::read_excel(data_path, sheet = '2018')
+data.2022 = readxl::read_excel(data_path, sheet = '2022')
 
-question.codes = c('Q1_1', 'Q1_2',
-                  'Q2_1', 'Q2_2')
+code_text[is.na(code_text$Text_2),]$Text_2 = ''
+data.2015$year = 2015
+data.2018$year = 2018
+data.2022$year = 2022
+num.year = 3
 
-question.texts = c('Q1_1' = 'Being a faculty member at the Johns Hopkins School of Medicine',
-                  'Q1_2' = 'Your career progression at the Johns Hopkins School of Medicine',
-                  
-                  'Q2_1' = 'To increase your salary',
-                  'Q2_2' = 'To improve your prospects for promotion')
+process = function(data){
+    data %>%
+        mutate(
+            Q1_1 = case_when(Q1_1 %in% 1:2 ~ 1,
+                             Q1_1 == 3 ~ 2,
+                             Q1_1 %in% 4:5 ~ 3,
+                             TRUE ~ 0),
+            Q1_4 = case_when(Q1_4 %in% 1:2 ~ 1,
+                             Q1_4 == 3 ~ 2,
+                             Q1_4 %in% 4:5 ~ 3,
+                             TRUE ~ 0),
+            Q1_5 = case_when(Q1_5 %in% 1:2 ~ 1,
+                             Q1_5 == 3 ~ 2,
+                             Q1_5 %in% 4:5 ~ 3,
+                             TRUE ~ 0),
+            # 1 and 2: Very Dissatisfied or Dissatisfied
+            # 3      : Neutral
+            # 4 and 5: Satisfied or Very Satisfied
+            
+            Q8_1 = case_when(Q8_1 %in% 1:2 ~ 1,
+                             Q8_1 == 3 ~ 2,
+                             Q8_1 %in% 4:5 ~ 3,
+                             TRUE ~ 0),
+            Q8_4 = case_when(Q8_4 %in% 1:2 ~ 1,
+                             Q8_4 == 3 ~ 2,
+                             Q8_4 %in% 4:5 ~ 3,
+                             TRUE ~ 0)
+            # 1 and 2: Strongly Disagree or Disagree
+            # 3      : Neutral
+            # 4 and 5: Agree or Strongly Disagree
+        )
+}
 
-colnames(sourcedata) = c(question.codes, 'rank', 'gender')
+questions = names(data.2015)[1:9]
+
+data = rbind(pivot_longer(process(data.2015), cols = all_of(questions), names_to = 'question', values_to = 'answer'),
+             pivot_longer(process(data.2018), cols = all_of(questions), names_to = 'question', values_to = 'answer'),
+             pivot_longer(process(data.2022), cols = all_of(questions), names_to = 'question', values_to = 'answer'))
+
+Ranks = c('Research Associate' = 1,
+          'Clinical Instructor/Fellow' = 2,
+          'Instructor' = 3,
+          'Asistant Professor' = 4,
+          'Associate Professor' = 5,
+          'Professor' = 6)
+
+Path = c('Basic Researcher' = 1,
+         'Clinical Excellence' = 2,
+         'Clinical Researcher' = 3,
+         'Clinician Educator' = 4,
+         'Clinician Innovator/Quality Improvement' = 5,
+         'Clinical Program Builder' = 6)
