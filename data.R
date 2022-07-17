@@ -12,10 +12,9 @@ code_text[is.na(code_text$Text_2),]$Text_2 = ''
 data.2015$year = 2015
 data.2018$year = 2018
 data.2022$year = 2022
-num.year = 3
 
 process = function(data){
-    data %>%
+    data.out = data %>%
         mutate(
             Q1_1 = case_when(Q1_1 %in% 1:2 ~ 1,
                              Q1_1 == 3 ~ 2,
@@ -40,11 +39,15 @@ process = function(data){
             Q8_4 = case_when(Q8_4 %in% 1:2 ~ 1,
                              Q8_4 == 3 ~ 2,
                              Q8_4 %in% 4:5 ~ 3,
-                             TRUE ~ 0)
+                             TRUE ~ 0),
             # 1 and 2: Strongly Disagree or Disagree
             # 3      : Neutral
             # 4 and 5: Agree or Strongly Disagree
         )
+    data.out[data.out$Q9 <=0,]$Q9 = 0
+    data.out[data.out$Q10 <=0,]$Q10 = 0
+    
+    return(data.out)
 }
 
 questions = names(data.2015)[1:9]
