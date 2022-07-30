@@ -49,18 +49,10 @@ ui = dashboardPage(
                 width = 6,
                 selectInput(
                     inputId = 'variable',
-                    label = 'Choose Display Variable',
-                    choices = c('Rank' = 'rank',
+                    label = 'Choose Stratification Variable for Positive Answers',
+                    choices = c('Rank' = 'rank')
                                 #'Race' = 'race',
-                                'Gender' = 'gender')
-                ),
-                checkboxGroupInput(
-                    inputId = 'answer_filter',
-                    label = 'Filter by Answer',
-                    choices = c('-' = 1,
-                                '0' = 2,
-                                '+' = 3),
-                    selected = 1:3
+                                #'Gender' = 'gender')
                 ),
                 plotOutput('plot_2')
                 
@@ -79,17 +71,17 @@ server = function(input, output){
     output$text_2 = renderText({code_text[code_text$Code == question.code(),]$Text_2})
     
     # Plot
-    data.filter_1 = reactive({
+    data.filter = reactive({
         data$answer != 0 &
         data$question == question.code() &
         data$rank %in% input$rank_filter
     })
     
     output$plot_1 = renderPlot({
-        data[data.filter_1(),] %>%
+        data[data.filter(),] %>%
             group_by(answer, year) %>%
             summarise(n = n()) %>%
-            mutate(year.sums = (data[data.filter_1(),] %>%
+            mutate(year.sums = (data[data.filter(),] %>%
                                     group_by(year) %>%
                                     summarise(n = n()))$n,
                    percent = n/year.sums) %>%
@@ -99,44 +91,28 @@ server = function(input, output){
             geom_text(aes(label = paste(round(100*percent, 2), '%', sep = ''), group = factor(year)),
                       position = position_dodge(width = 1), vjust = -0.5) +
             scale_y_continuous(labels = scales::percent) +
-            labs(x = '', y = 'Percentage', fill = 'Year')
-    })
-    
-    data.filter_2 = reactive({
-        data$answer != 0 &
-            data$question == question.code() &
-            data$rank %in% 1:6 &
-            data$gender %in% 1:2 &
-            data$answer %in% input$answer_filter
+            labs(x = 'Answers', y = 'Percentage', fill = 'Year')
     })
     
     plot.list = reactive({
         list(
             
-            'rank' = data[data.filter_2(),] %>%
-                    group_by(rank, year) %>%
+            'rank' = left_join(
+                data[data.filter(),] %>%
+                    group_by(rank, answer, year) %>%
                     summarise(n = n()) %>%
-                    mutate(year.sums = (data[data.filter_2(),] %>%
-                                            group_by(year) %>%
-                                            summarise(n = n()))$n,
-                           percent = n/year.sums) %>%
+                    group_by(rank, year) %>%
+                    summarise(S = sum(n)),
+                
+                data[data.filter(),] %>%
+                    filter(answer == 3) %>%
+                    group_by(rank, year) %>%
+                    summarise(n = n()),
+                
+                by = c('rank', 'year')
+            ) %>% mutate(percent = n/S) %>%
                     
                     ggplot(aes(x = factor(rank), y = percent)) +
-                    geom_bar(aes(fill = factor(year)), stat = 'identity', position = 'dodge') +
-                    geom_text(aes(label = paste(round(100*percent, 2), '%', sep = ''), group = factor(year)),
-                              position = position_dodge(width = 1), vjust = -0.5) +
-                    scale_y_continuous(labels = scales::percent) +
-                    labs(x = '', y = 'Percentage', fill = 'Year'),
-            
-            'gender' = data[data.filter_2(),] %>%
-                    group_by(gender, year) %>%
-                    summarise(n = n()) %>%
-                    mutate(year.sums = (data[data.filter_2(),] %>%
-                                            group_by(year) %>%
-                                            summarise(n = n()))$n,
-                           percent = n/year.sums) %>%
-                    
-                    ggplot(aes(x = factor(gender), y = percent)) +
                     geom_bar(aes(fill = factor(year)), stat = 'identity', position = 'dodge') +
                     geom_text(aes(label = paste(round(100*percent, 2), '%', sep = ''), group = factor(year)),
                               position = position_dodge(width = 1), vjust = -0.5) +

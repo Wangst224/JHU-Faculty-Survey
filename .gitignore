@@ -3,3 +3,5 @@
 *.docx
 *.xlsx
 *.dcf
+Rshiny.io/app.R
+Rshiny.io/data.R
