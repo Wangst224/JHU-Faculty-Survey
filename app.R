@@ -14,13 +14,35 @@ ui = dashboardPage(
         sidebarMenu(id = 'sidebar_choice',
             menuItem('Question 1', tabName = 'Q1',
                      menuSubItem('Question 1.1', tabName = 'Q1_1'),
+                     menuSubItem('Question 1.2', tabName = 'Q1_2'),
+                     menuSubItem('Question 1.3', tabName = 'Q1_3'),
                      menuSubItem('Question 1.4', tabName = 'Q1_4'),
-                     menuSubItem('Question 1.5', tabName = 'Q1_5')),
-            menuItem('Question 8', tabName = 'Q8',
-                     menuSubItem('Question 8.1', tabName = 'Q8_1'),
-                     menuSubItem('Question 8.4', tabName = 'Q8_4')),
-            menuItem('Question 9', tabName = 'Q9'),
-            menuItem('Question 10', tabName = 'Q10')
+                     menuSubItem('Question 1.5', tabName = 'Q1_5'),
+                     menuSubItem('Question 1.6', tabName = 'Q1_6')),
+            
+            menuItem('Question 2', tabName = 'Q2',
+                     menuSubItem('Question 2.1' , tabName = 'Q2_1'),
+                     menuSubItem('Question 2.2' , tabName = 'Q2_2'),
+                     menuSubItem('Question 2.3' , tabName = 'Q2_3'),
+                     menuSubItem('Question 2.4' , tabName = 'Q2_4'),
+                     menuSubItem('Question 2.5' , tabName = 'Q2_5'),
+                     menuSubItem('Question 2.6' , tabName = 'Q2_6'),
+                     menuSubItem('Question 2.7' , tabName = 'Q2_7'),
+                     menuSubItem('Question 2.8' , tabName = 'Q2_8'),
+                     menuSubItem('Question 2.9' , tabName = 'Q2_9'),
+                     menuSubItem('Question 2.10', tabName = 'Q2_10'),
+                     menuSubItem('Question 2.11', tabName = 'Q2_11'),
+                     menuSubItem('Question 2.12', tabName = 'Q2_12'),
+                     menuSubItem('Question 2.13', tabName = 'Q2_13'),
+                     menuSubItem('Question 2.14', tabName = 'Q2_14')),
+            
+            menuItem('Question 6', tabName = 'Q6',
+                     menuSubItem('Question 6.1' , tabName = 'Q6_1'),
+                     menuSubItem('Question 6.2' , tabName = 'Q6_2'),
+                     menuSubItem('Question 6.3' , tabName = 'Q6_3'),
+                     menuSubItem('Question 6.4' , tabName = 'Q6_4'),
+                     menuSubItem('Question 6.5' , tabName = 'Q6_5'),
+                     menuSubItem('Question 6.6' , tabName = 'Q6_6'))
         )
     ),
     
@@ -28,13 +50,41 @@ ui = dashboardPage(
     dashboardBody(
         
         fluidRow(
-            h3(textOutput('text_1')),
-            h4(textOutput('text_2'))
+            h3(textOutput('topic')),
+            h4(textOutput('question'))
         ),
         
         fluidRow(
             box(
-                width = 6,
+                width = 3,
+                selectInput(
+                    inputId = 'year',
+                    label = 'Choose Year',
+                    choices = c(2015, 2018, 2022)
+                ),
+                selectInput(
+                    inputId = 'variable',
+                    label = 'Choose Stratification Variable',
+                    choices = c('Gender' = 'gender',
+                                'Rank' = 'rank',
+                                'Department' = 'department')
+                ),
+                selectInput(
+                    inputId = 'mode.strat',
+                    label = 'Choose Display Mode',
+                    choices = c('Frequency' = 'frequency',
+                                'Relative Frequency' = 'rel.frequency')
+                )
+            ),
+            box(
+                width = 9,
+                plotOutput('fig_strat')
+            )
+        ),
+        
+        fluidRow(
+            box(
+                width = 3,
                 
                 checkboxGroupInput(
                     inputId = 'rank_filter',
@@ -42,20 +92,26 @@ ui = dashboardPage(
                     choices = Ranks,
                     selected = Ranks
                 ),
-                plotOutput('plot_1')
-            ),
                 
-            box(
-                width = 6,
-                selectInput(
-                    inputId = 'variable',
-                    label = 'Choose Stratification Variable for Positive Answers',
-                    choices = c('Rank' = 'rank')
-                                #'Race' = 'race',
-                                #'Gender' = 'gender')
+                checkboxGroupInput(
+                    inputId = 'gender_filter',
+                    label = 'Filter by Gender',
+                    choices = Gender,
+                    selected = Gender
                 ),
-                plotOutput('plot_2')
                 
+                selectInput(
+                    inputId = 'mode.trend',
+                    label = 'Choose Display Mode',
+                    choices = c('Frequency' = 'frequency',
+                                'Relative Frequency' = 'rel.frequency')
+                )
+                
+            ),
+            
+            box(
+                width = 9,
+                plotOutput('fig_trend')
             )
             
         )
@@ -66,62 +122,33 @@ ui = dashboardPage(
 server = function(input, output){
     
     # Page Title
-    question.code = reactive({input$sidebar_choice})
-    output$text_1 = renderText({code_text[code_text$Code == question.code(),]$Text_1})
-    output$text_2 = renderText({code_text[code_text$Code == question.code(),]$Text_2})
+    output$topic = renderText({topic[question.code == input$sidebar_choice]})
+    output$question = renderText({question[question.code == input$sidebar_choice]})
+    
+    # Filter for Trend Plot
+    Filter = reactive({
+        data$rank %in% input$rank_filter &
+        data$gender %in% input$gender_filter
+    })
     
     # Plot
-    data.filter = reactive({
-        data$answer != 0 &
-        data$question == question.code() &
-        data$rank %in% input$rank_filter
+    output$fig_strat = renderPlot({
+        if (input$mode.strat == 'frequency'){
+            get.plot.strat(data[data$year == input$year,], input$variable, input$sidebar_choice)[['strat.freq']]
+        }
+        else{
+            get.plot.strat(data[data$year == input$year,], input$variable, input$sidebar_choice)[['strat.freq.rel']]
+        }
     })
     
-    output$plot_1 = renderPlot({
-        data[data.filter(),] %>%
-            group_by(answer, year) %>%
-            summarise(n = n()) %>%
-            mutate(year.sums = (data[data.filter(),] %>%
-                                    group_by(year) %>%
-                                    summarise(n = n()))$n,
-                   percent = n/year.sums) %>%
-            
-            ggplot(aes(x = factor(answer), y = percent)) +
-            geom_bar(aes(fill = factor(year)), stat = 'identity', position = 'dodge') +
-            geom_text(aes(label = paste(round(100*percent, 2), '%', sep = ''), group = factor(year)),
-                      position = position_dodge(width = 1), vjust = -0.5) +
-            scale_y_continuous(labels = scales::percent) +
-            labs(x = 'Answers', y = 'Percentage', fill = 'Year')
+    output$fig_trend = renderPlot({
+        if (input$mode.trend == 'frequency'){
+            get.plot.trend(data[Filter(),], input$sidebar_choice)[['trend.freq']]
+        }
+        else{
+            get.plot.trend(data[Filter(),], input$sidebar_choice)[['trend.freq.rel']]
+        }
     })
-    
-    plot.list = reactive({
-        list(
-            
-            'rank' = left_join(
-                data[data.filter(),] %>%
-                    group_by(rank, answer, year) %>%
-                    summarise(n = n()) %>%
-                    group_by(rank, year) %>%
-                    summarise(S = sum(n)),
-                
-                data[data.filter(),] %>%
-                    filter(answer == 3) %>%
-                    group_by(rank, year) %>%
-                    summarise(n = n()),
-                
-                by = c('rank', 'year')
-            ) %>% mutate(percent = n/S) %>%
-                    
-                    ggplot(aes(x = factor(rank), y = percent)) +
-                    geom_bar(aes(fill = factor(year)), stat = 'identity', position = 'dodge') +
-                    geom_text(aes(label = paste(round(100*percent, 2), '%', sep = ''), group = factor(year)),
-                              position = position_dodge(width = 1), vjust = -0.5) +
-                    scale_y_continuous(labels = scales::percent) +
-                    labs(x = '', y = 'Percentage', fill = 'Year')
-        )
-    })
-    
-    output$plot_2 = renderPlot({plot.list()[[input$variable]]})
 }
 
 shinyApp(ui = ui, server = server)
