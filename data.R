@@ -33,17 +33,41 @@ Ranks = c('Research Associate' = 1,
           'Instructor' = 3,
           'Asistant Professor' = 4,
           'Associate Professor' = 5,
-          'Professor' = 4)
+          'Professor' = 6)
 
 # Below are for plots
 
 list.levels.fill = list('Q1' = 5:1,
                         'Q2' = 3:1,
-                        'Q6' = 5:1)
+                        'Q4' = 5:1,
+                        'Q5' = 1:9,
+                        'Q6' = 5:1,
+                        'Q8' = 1:2,
+                        'Q9' = 5:1,
+                        'Q10' = 1:2,
+                        'Q11' = 1:2,
+                        'Q16' = 5:1,
+                        'Q17' = 1:2,
+                        'Q19' = 1:2,
+                        'Q21' = 1:2,
+                        'Q24' = 5:1)
 
 list.labels.fill = list('Q1' = c('Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very Dissatisfied'),
                         'Q2' = c('To a Great Extent', 'To Some Extent', 'Not at All'),
-                        'Q6' = c('Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'))
+                        'Q4' = c('Very Likely', 'Likely', 'Neutral', 'Unlikely', 'Very Unlikely'),
+                        'Q5' = c('Salary', 'Lack of Resources to Do Your Job Effectively',
+                                 'Barriers to Promotion', 'Barriers to Leadership', 'Lack of Extramural Funding',
+                                 'Retirement', 'Not Feeling Valued', 'Family Reasons', 'Others'),
+                        'Q6' = c('Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'),
+                        'Q8' = c('Yes', 'No'),
+                        'Q9' = c('Always', 'Frequently', 'Sometimes', 'Rarely', 'Never'),
+                        'Q10' = c('Yes', 'No'),
+                        'Q11' = c('Yes', 'No'),
+                        'Q16' = c('Strongly Agree', 'Agree', 'Neutral', 'Disagree', 'Strongly Disagree'),
+                        'Q17' = c('Yes', 'No'),
+                        'Q19' = c('Yes', 'No'),
+                        'Q21' = c('Yes', 'No'),
+                        'Q24' = c('Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied', 'Very Dissatisfied'))
 
 list.levels.y = list('gender' = 1:2,
                      'rank' = 1:6,
@@ -84,6 +108,12 @@ get.FreqTable = function(data, strat.var, answer.var){
 
 get.plot.strat = function(data, strat.var, answer.var){
     data.plot = get.FreqTable(data, strat.var, answer.var)
+    
+    # When Department is chosen to be the stratification variable, only show tenured track faculty.
+    if (strat.var == 'department'){
+        data.plot = get.FreqTable(data[data$rank %in% 5:6, ], strat.var, answer.var)
+    }
+    
     levels.y = list.levels.y[[strat.var]]
     labels.y = list.labels.y[[strat.var]]
     levels.fill = list.levels.fill[[topic.code[question.code == answer.var]]]

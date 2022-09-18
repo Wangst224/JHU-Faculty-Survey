@@ -36,13 +36,38 @@ ui = dashboardPage(
                      menuSubItem('Question 2.13', tabName = 'Q2_13'),
                      menuSubItem('Question 2.14', tabName = 'Q2_14')),
             
+            menuItem('Question 4', tabName = 'Q4'),
+            menuItem('Question 5', tabName = 'Q5'),
+            
             menuItem('Question 6', tabName = 'Q6',
                      menuSubItem('Question 6.1' , tabName = 'Q6_1'),
                      menuSubItem('Question 6.2' , tabName = 'Q6_2'),
                      menuSubItem('Question 6.3' , tabName = 'Q6_3'),
                      menuSubItem('Question 6.4' , tabName = 'Q6_4'),
                      menuSubItem('Question 6.5' , tabName = 'Q6_5'),
-                     menuSubItem('Question 6.6' , tabName = 'Q6_6'))
+                     menuSubItem('Question 6.6' , tabName = 'Q6_6')),
+            
+            menuItem('Question 8', tabName = 'Q8'),
+            menuItem('Question 9', tabName = 'Q9'),
+            menuItem('Question 10', tabName = 'Q10'),
+            menuItem('Question 11', tabName = 'Q11'),
+            
+            menuItem('Question 16', tabName = 'Q16',
+                     menuSubItem('Question 16.1' , tabName = 'Q16_1'),
+                     menuSubItem('Question 16.2' , tabName = 'Q16_2'),
+                     menuSubItem('Question 16.3' , tabName = 'Q16_3'),
+                     menuSubItem('Question 16.4' , tabName = 'Q16_4'),
+                     menuSubItem('Question 16.5' , tabName = 'Q16_5'),
+                     menuSubItem('Question 16.6' , tabName = 'Q16_6')),
+            
+            menuItem('Question 17', tabName = 'Q17'),
+            menuItem('Question 19', tabName = 'Q19'),
+            menuItem('Question 21', tabName = 'Q21'),
+            
+            menuItem('Question 24', tabName = 'Q24',
+                     menuSubItem('Question 24.3' , tabName = 'Q24_3'),
+                     menuSubItem('Question 24.4' , tabName = 'Q24_4'),
+                     menuSubItem('Question 24.5' , tabName = 'Q24_5'))
         )
     ),
     
@@ -67,7 +92,7 @@ ui = dashboardPage(
                     label = 'Choose Stratification Variable',
                     choices = c('Gender' = 'gender',
                                 'Rank' = 'rank',
-                                'Department' = 'department')
+                                'Department (Tenured Faculty Only)' = 'department')
                 ),
                 selectInput(
                     inputId = 'mode.strat',
@@ -113,9 +138,7 @@ ui = dashboardPage(
                 width = 9,
                 plotOutput('fig_trend')
             )
-            
         )
-        
     )
 )
 
@@ -124,12 +147,12 @@ server = function(input, output){
     # Page Title
     output$topic = renderText({topic[question.code == input$sidebar_choice]})
     output$question = renderText({question[question.code == input$sidebar_choice]})
-    
+
     # Filter for Trend Plot
     Filter = reactive({
         data$rank %in% input$rank_filter &
         data$gender %in% input$gender_filter
-    })
+    })    
     
     # Plot
     output$fig_strat = renderPlot({
